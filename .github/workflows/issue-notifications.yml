@@ -1,0 +1,109 @@
+name: Issue Notifications 
+
+  
+
+on: 
+
+  issues: 
+
+    types: [opened, reopened] 
+
+  
+
+jobs: 
+
+  notify: 
+
+    runs-on: ubuntu-latest 
+
+  
+
+    steps: 
+
+      - name: Send Teams notification 
+
+        env: 
+
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }} 
+
+        run: | 
+
+          issue_title="${{ github.event.issue.title }}" 
+
+          issue_url="${{ github.event.issue.html_url }}" 
+
+          issue_body="${{ github.event.issue.body }}" 
+
+          issue_user="${{ github.event.issue.user.login }}" 
+
+          repo_name="${{ github.repository }}" 
+
+          curl -H 'Content-Type: application/json' -d '{ 
+
+            "@type": "MessageCard", 
+
+            "@context": "http://schema.org/extensions", 
+
+            "summary": "New Issue Notification", 
+
+            "themeColor": "0076D7", 
+
+            "title": "New Issue in '"${repo_name}"': '"${issue_title}"'", 
+
+            "sections": [{ 
+
+              "activityTitle": "'"${issue_user}"' created a new issue", 
+
+              "activitySubtitle": "'"${issue_title}"'", 
+
+              "activityImage": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", 
+
+              "facts": [ 
+
+                { 
+
+                  "name": "Repository:", 
+
+                  "value": "'"${repo_name}"'" 
+
+                }, 
+
+                { 
+
+                  "name": "Created By:", 
+
+                  "value": "'"${issue_user}"'" 
+
+                }, 
+
+                { 
+
+                  "name": "Description:", 
+
+                  "value": "'"${issue_body}"'" 
+
+                } 
+
+              ], 
+
+              "markdown": true 
+
+            }], 
+
+            "potentialAction": [{ 
+
+              "@type": "OpenUri", 
+
+              "name": "View Issue", 
+
+              "targets": [{ 
+
+                "os": "default", 
+
+                "uri": "'"${issue_url}"'" 
+
+              }] 
+
+            }] 
+
+          }' $TEAMS_WEBHOOK_URL 
